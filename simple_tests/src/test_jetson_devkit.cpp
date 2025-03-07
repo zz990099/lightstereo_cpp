@@ -15,13 +15,12 @@ using namespace detection_2d;
 TEST(simple_test, test)
 {
   auto engine =
-      CreateTrtInferCore("/workspace/models/lightstereo_s_scene_flow.engine");
-  auto preprocess_block = CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
-
+      CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general.engine");
+  auto preprocess_block = CreateCudaDetPreProcess();
   auto model = stereo::CreateLightStereoModel(engine, preprocess_block, 256, 512, {"left_img", "right_img"}, {"disp_pred"});
 
-  auto left = cv::imread("/workspace/test_data/stereo/left.png");
-  auto right = cv::imread("/workspace/test_data/stereo/right.png");
+  auto left = cv::imread("/workspace/test_data/left.png");
+  auto right = cv::imread("/workspace/test_data/right.png");
 
   FPSCounter fps_counter;
   fps_counter.Start();
