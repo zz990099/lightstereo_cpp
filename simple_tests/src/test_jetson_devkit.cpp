@@ -16,8 +16,8 @@ using namespace stereo;
 std::shared_ptr<BaseStereoMatchingModel> CreateLightStereoModel()
 {
   auto engine = CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general.engine");
-  // auto preprocess_block = CreateCudaDetPreProcess();
-  auto preprocess_block = CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
+  auto preprocess_block = CreateCudaDetPreProcess();
+  // auto preprocess_block = CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
   auto model            = stereo::CreateLightStereoModel(engine, preprocess_block, 256, 512,
                                                          {"left_img", "right_img"}, {"disp_pred"});
 
