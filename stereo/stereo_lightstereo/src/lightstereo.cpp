@@ -106,6 +106,7 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
 
   cv::Mat disp(input_height_, input_width_, CV_32FC1);
   memcpy(disp.data, output_disp, input_height_ * input_width_ * sizeof(float));
+  disp /= package->transform_scale;
 
   // 1. crop
   const int original_height = package->left_image_data->GetImageDataInfo().image_height;
