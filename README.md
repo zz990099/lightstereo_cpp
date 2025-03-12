@@ -73,6 +73,15 @@ cmake .. -DBUILD_TESTING=ON -DENABLE_TENSORRT=ON
 make -j
 ```
 
+### Convert Model
+
+在docker容器内，运行模型转换脚本
+```bash
+cd /workspace
+bash tools/cvt_onnx2trt.sh
+# 或者运行python脚本，将模型转换为rknn
+```
+
 ### Run Test Cases
 
 运行测试用例，具体测试用例请参考代码。
