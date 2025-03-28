@@ -15,6 +15,10 @@
 |:----------------------------------------:|:----:|
 | **left image**  | **disp in color** |
 
+以下带有**opt**标志的代表在原工程[OpenStereo](https://github.com/XiandaGuo/OpenStereo)基础上，优化模型结构后导出的onnx模型，具体请查看[issue_link](https://github.com/XiandaGuo/OpenStereo/issues/212).
+
+带有***async***标志的代表使用异步流程进行推理。
+
 |  nvidia-3080-laptop   |   qps   |  cpu   |
 |:---------:|:---------:|:----------------:|
 |  lightstereo(fp16) - origin   |   **388**   |  150%   |
