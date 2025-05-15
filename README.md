@@ -91,9 +91,9 @@ bash tools/cvt_onnx2trt.sh
 运行测试用例，具体测试用例请参考代码。
 ```bash
 cd /workspace/build
-./bin/simple_tests --gtest_filter=*correctness
+./bin/test_stereo_lightstereo --gtest_filter=*correctness
 # 限制GLOG输出
-GLOG_minloglevel=1 ./bin/simple_tests --gtest_filter=*speed
+GLOG_minloglevel=1 ./bin/test_stereo_lightstereo --gtest_filter=*speed
 ```
 
 ## References
