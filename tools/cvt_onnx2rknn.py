@@ -5,7 +5,7 @@ onnx_model_path = '/workspace/models/lightstereo_s_sceneflow_general_opt.onnx'
 # quant data
 DATASET_PATH = '/workspace/test_data/quant_data/dataset.txt'
 # output paths
-DEFAULT_RKNN_PATH = '/workspace/models/lightstereo_s_sceneflow_general.rknn'
+DEFAULT_RKNN_PATH = '/workspace/models/lightstereo_s_sceneflow_general_opt.rknn'
 
 if __name__ == '__main__':
     # Create RKNN object
