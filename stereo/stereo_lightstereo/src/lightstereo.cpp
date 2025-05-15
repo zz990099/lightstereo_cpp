@@ -44,33 +44,23 @@ LightStereo::LightStereo(
       output_blobs_name_(output_blobs_name)
 {
   // Check if the input arguments and inference_core matches
-  auto p_map_buffer2ptr = infer_core_->AllocBlobsBuffer();
-  if (p_map_buffer2ptr->Size() != input_blobs_name_.size() + output_blobs_name_.size())
+  auto blobs_tensor = infer_core_->AllocBlobsBuffer();
+  if (blobs_tensor->Size() != input_blobs_name_.size() + output_blobs_name_.size())
   {
     LOG(ERROR) << "[LightStereo] Infer core should has {"
                << input_blobs_name_.size() + output_blobs_name_.size() << "} blobs !"
-               << " but got " << p_map_buffer2ptr->Size() << " blobs";
+               << " but got " << blobs_tensor->Size() << " blobs";
     throw std::runtime_error("[LightStereo] Got invalid input arguments!!");
   }
 
   for (const std::string &input_blob_name : input_blobs_name)
   {
-    if (p_map_buffer2ptr->GetOuterBlobBuffer(input_blob_name).first == nullptr)
-    {
-      LOG(ERROR) << "[LightStereo] Input_blob_name_ {" << input_blob_name
-                 << "input blob name does not match `infer_core_` !";
-      throw std::runtime_error("[LightStereo] Got invalid input arguments!!");
-    }
+    blobs_tensor->GetTensor(input_blob_name);
   }
 
   for (const std::string &output_blob_name : output_blobs_name)
   {
-    if (p_map_buffer2ptr->GetOuterBlobBuffer(output_blob_name).first == nullptr)
-    {
-      LOG(ERROR) << "[LightStereo] Output_blob_name_ {" << output_blob_name
-                 << "} does not match name in infer_core_ !";
-      throw std::runtime_error("[LightStereo] Got invalid input arguments!!");
-    }
+    blobs_tensor->GetTensor(output_blob_name);
   }
 }
 
@@ -81,11 +71,14 @@ bool LightStereo::PreProcess(std::shared_ptr<async_pipeline::IPipelinePackage> _
               "[LightStereo] PreProcess the `_package` instance does not belong to "
               "`DetectionPipelinePackage`");
 
-  const auto &p_blob_buffers = package->GetInferBuffer();
-  const float left_scale     = preprocess_block_->Preprocess(
-      package->left_image_data, p_blob_buffers, input_blobs_name_[0], input_height_, input_width_);
+  auto blobs_tensor = package->GetInferBuffer();
+
+  const float left_scale = preprocess_block_->Preprocess(
+      package->left_image_data, blobs_tensor->GetTensor(input_blobs_name_[0]), input_height_,
+      input_width_);
   const float right_scale = preprocess_block_->Preprocess(
-      package->right_image_data, p_blob_buffers, input_blobs_name_[1], input_height_, input_width_);
+      package->right_image_data, blobs_tensor->GetTensor(input_blobs_name_[1]), input_height_,
+      input_width_);
 
   package->transform_scale = left_scale;
   return true;
@@ -100,7 +93,7 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
 
   auto p_blob_buffers = package->GetInferBuffer();
 
-  const void *output_disp = p_blob_buffers->GetOuterBlobBuffer(output_blobs_name_[0]).first;
+  const void *output_disp = p_blob_buffers->GetTensor(output_blobs_name_[0])->RawPtr();
   CHECK_STATE(output_disp != nullptr,
               "[LightStereo] `PostProcess` Got invalid output disp ptr !!!");
 
@@ -110,10 +103,10 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
 
   // 1. crop
   const int original_height = package->left_image_data->GetImageDataInfo().image_height;
-  const int original_width = package->left_image_data->GetImageDataInfo().image_width;
-  const int crop_height = original_height * package->transform_scale;
-  const int crop_width = original_width * package->transform_scale;
-  cv::Mat crop_disp = disp(cv::Rect(0, 0, crop_width, crop_height));
+  const int original_width  = package->left_image_data->GetImageDataInfo().image_width;
+  const int crop_height     = original_height * package->transform_scale;
+  const int crop_width      = original_width * package->transform_scale;
+  cv::Mat   crop_disp       = disp(cv::Rect(0, 0, crop_width, crop_height));
 
   // 2. resize to original
   cv::Mat disp_to_original;
@@ -121,7 +114,6 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
 
   package->disp = disp_to_original;
 
-  
   return true;
 }
 
