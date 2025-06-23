@@ -14,12 +14,11 @@ if(ENABLE_ORT)
   list(APPEND platform_core_packages ort_core)
 endif()
 
-find_package(GTest REQUIRED)
-find_package(glog REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(benchmark REQUIRED)
 
 set(source_file
-  test_stereo_lightstereo.cpp
+  benchmark_stereo_lightstereo.cpp
 )
 
 include_directories(
@@ -27,29 +26,26 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(test_stereo_lightstereo ${source_file})   
+add_executable(benchmark_stereo_lightstereo ${source_file})
 
-target_link_libraries(test_stereo_lightstereo PUBLIC 
-  GTest::gtest_main
-  glog::glog
+target_link_libraries(benchmark_stereo_lightstereo PUBLIC
+  benchmark::benchmark
   ${OpenCV_LIBS}
   deploy_core
   image_processing_utils
   stereo_lightstereo
-  test_utils
+  benchmark_utils
   ${platform_core_packages}
 )
 
 if(ENABLE_TENSORRT)
-  target_compile_definitions(test_stereo_lightstereo PRIVATE ENABLE_TENSORRT)
+  target_compile_definitions(benchmark_stereo_lightstereo PRIVATE ENABLE_TENSORRT)
 endif()
 
 if(ENABLE_RKNN)
-  target_compile_definitions(test_stereo_lightstereo PRIVATE ENABLE_RKNN)
+  target_compile_definitions(benchmark_stereo_lightstereo PRIVATE ENABLE_RKNN)
 endif()
 
 if(ENABLE_ORT)
-  target_compile_definitions(test_stereo_lightstereo PRIVATE ENABLE_ORT)
+  target_compile_definitions(benchmark_stereo_lightstereo PRIVATE ENABLE_ORT)
 endif()
-
-gtest_discover_tests(test_stereo_lightstereo)
