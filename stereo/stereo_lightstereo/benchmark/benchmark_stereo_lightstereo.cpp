@@ -10,8 +10,10 @@ using namespace easy_deploy;
 
 std::shared_ptr<BaseStereoMatchingModel> CreateLightStereoTensorRTModel()
 {
-  auto engine = CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt.engine");
-  auto preprocess_block = CreateCudaDetPreProcess();
+  auto engine =
+      CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.engine");
+  auto preprocess_block =
+      CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
   return CreateLightStereoModel(engine, preprocess_block, 256, 512, {"left_img", "right_img"},
                                 {"disp_pred"});
 }
@@ -36,7 +38,7 @@ BENCHMARK(benchmark_stereo_matching_lightstereo_tensorrt_async)->Arg(500)->UseRe
 std::shared_ptr<BaseStereoMatchingModel> CreateLightStereoOnnxRuntimeModel()
 {
   auto engine =
-      CreateOrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt.onnx",
+      CreateOrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.onnx",
                          {{"left_img", {1, 3, 256, 512}}, {"right_img", {1, 3, 256, 512}}},
                          {{"disp_pred", {1, 1, 256, 512}}});
   auto preprocess_block =
@@ -65,7 +67,7 @@ BENCHMARK(benchmark_stereo_matching_lightstereo_onnxruntime_async)->Arg(30)->Use
 std::shared_ptr<BaseStereoMatchingModel> CreateLightStereoRknnModel()
 {
   auto engine = CreateRknnInferCore(
-      "/workspace/models/lightstereo_s_sceneflow_general_opt.rknn",
+      "/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.rknn",
       {{"left_img", RknnInputTensorType::RK_UINT8}, {"right_img", RknnInputTensorType::RK_UINT8}},
       5, 3);
   auto preprocess_block = CreateCpuDetPreProcess({}, {}, false, false);

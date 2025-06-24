@@ -37,10 +37,11 @@ public:
   void SetUp() override
   {
     auto engine =
-        CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt.engine");
-    auto preprocess_block = CreateCudaDetPreProcess();
-    lightstereo_model_    = CreateLightStereoModel(engine, preprocess_block, 256, 512,
-                                                   {"left_img", "right_img"}, {"disp_pred"});
+        CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.engine");
+    auto preprocess_block =
+        CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
+    lightstereo_model_ = CreateLightStereoModel(engine, preprocess_block, 256, 512,
+                                                {"left_img", "right_img"}, {"disp_pred"});
 
     speed_test_predict_rounds_    = 2000;
     left_image_path_              = "/workspace/test_data/left.png";
@@ -62,7 +63,7 @@ public:
   void SetUp() override
   {
     auto engine =
-        CreateOrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt.onnx",
+        CreateOrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.onnx",
                            {{"left_img", {1, 3, 256, 512}}, {"right_img", {1, 3, 256, 512}}},
                            {{"disp_pred", {1, 1, 256, 512}}});
     auto preprocess_block =
@@ -90,7 +91,7 @@ public:
   void SetUp() override
   {
     auto engine = CreateRknnInferCore(
-        "/workspace/models/lightstereo_s_sceneflow_general_opt.rknn",
+        "/workspace/models/lightstereo_s_sceneflow_general_opt_256_512.rknn",
         {{"left_img", RknnInputTensorType::RK_UINT8}, {"right_img", RknnInputTensorType::RK_UINT8}},
         5, 3);
     auto preprocess_block         = CreateCpuDetPreProcess({}, {}, false, false);
