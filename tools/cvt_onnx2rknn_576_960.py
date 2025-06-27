@@ -1,11 +1,11 @@
 import sys
 from rknn.api import RKNN
 # onnx model path
-onnx_model_path = '/workspace/models/lightstereo_s_sceneflow_general_opt.onnx'
+onnx_model_path = '/workspace/models/lightstereo_s_sceneflow_general_opt_576_960.onnx'
 # quant data
 DATASET_PATH = '/workspace/test_data/quant_data/dataset.txt'
 # output paths
-DEFAULT_RKNN_PATH = '/workspace/models/lightstereo_s_sceneflow_general_opt.rknn'
+DEFAULT_RKNN_PATH = '/workspace/models/lightstereo_s_sceneflow_general_opt_576_960.rknn'
 
 if __name__ == '__main__':
     # Create RKNN object
