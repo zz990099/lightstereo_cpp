@@ -1,4 +1,4 @@
-#include "detection_2d_util/detection_2d_util.hpp"
+#include "image_processing_utils/image_processing_utils.hpp"
 #include "stereo_lightstereo/lightstereo.hpp"
 #include "eval_utils/stereo_matching_eval_utils.hpp"
 
@@ -14,8 +14,9 @@ public:
   {
     auto engine =
         CreateTrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_576_960.engine");
-    auto preprocess_block =
-        CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
+    auto preprocess_block = CreateCudaImageProcessingResizePad(
+        ImageProcessingPadMode::TOP_RIGHT, ImageProcessingPadValue::EDGE, true, true,
+        {123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
 
     auto model = CreateLightStereoModel(engine, preprocess_block, 576, 960,
                                         {"left_img", "right_img"}, {"disp_pred"});
@@ -42,8 +43,9 @@ public:
         CreateOrtInferCore("/workspace/models/lightstereo_s_sceneflow_general_opt_576_960.onnx",
                            {{"left_img", {1, 3, 576, 960}}, {"right_img", {1, 3, 576, 960}}},
                            {{"disp_pred", {1, 1, 576, 960}}});
-    auto preprocess_block =
-        CreateCpuDetPreProcess({123.675, 116.28, 103.53}, {58.395, 57.12, 57.375}, true, true);
+    auto preprocess_block = CreateCpuImageProcessingResizePad(
+        ImageProcessingPadMode::TOP_RIGHT, ImageProcessingPadValue::EDGE, true, true,
+        {123.675, 116.28, 103.53}, {58.395, 57.12, 57.375});
 
     auto model = CreateLightStereoModel(engine, preprocess_block, 576, 960,
                                         {"left_img", "right_img"}, {"disp_pred"});
@@ -70,7 +72,8 @@ public:
         "/workspace/models/lightstereo_s_sceneflow_general_opt_576_960.rknn",
         {{"left_img", RknnInputTensorType::RK_UINT8}, {"right_img", RknnInputTensorType::RK_UINT8}},
         5, 3);
-    auto preprocess_block = CreateCpuDetPreProcess({}, {}, false, false);
+    auto preprocess_block = CreateCpuImageProcessingResizePad(
+        ImageProcessingPadMode::TOP_RIGHT, ImageProcessingPadValue::EDGE, false, false, {}, {});
 
     auto model = CreateLightStereoModel(engine, preprocess_block, 576, 960,
                                         {"left_img", "right_img"}, {"disp_pred"});
