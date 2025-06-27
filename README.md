@@ -8,6 +8,7 @@
 
 1. 支持多种推理引擎: `TensorRT`、`RKNN`、`OnnxRuntime`
 2. 支持异步、多核推理，算法吞吐量较高，特别是`RK3588`平台
+3. 支持部署后模型的正确性、性能、精度测试。
 
 ## Demo
 
@@ -63,17 +64,25 @@ git submodule init && git submodule update
 使用docker构建工作环境
 ```bash
 cd lightstereo_cpp
-bash easy_deploy_tool/docker/build_docker.sh --platform=jetson_trt8_u2004 # or jetson_trt8_u2204, nvidia_gpu, rk3588
+bash easy_deploy_tool/docker/easy_deploy_startup.sh # 选择对应的平台和环境
 bash easy_deploy_tool/docker/into_docker.sh
 ```
 
 ### Compile Codes
 
+***支持stereo-matching算法的evaluation*** 
+
+使用`-DENABLE_DEBUG_OUTPUT=ON`来开启测试log输出
+
 在docker容器内，编译工程. 使用 `-DENABLE_*`宏来启用某种推理框架，可用的有: `-DENABLE_TENSORRT=ON`、`-DENABLE_RKNN=ON`、`-DENABLE_ORT=ON`，可以兼容。 
 ```bash
 cd /workspace
 mdkir build && cd build
-cmake .. -DBUILD_TESTING=ON -DENABLE_TENSORRT=ON
+cmake .. -DENABLE_DEBUG_OUTPUT=OFF \
+         -DBUILD_TESTING=ON \
+         -DBUILD_EVAL=ON \
+         -DBUILD_BENCHMARK=ON \
+         -DENABLE_TENSORRT=ON
 make -j
 ```
 
@@ -84,6 +93,7 @@ make -j
 cd /workspace
 bash tools/cvt_onnx2trt.sh
 # 或者运行python脚本，将模型转换为rknn
+bash tools/cvt_onnx2rknn.sh
 ```
 
 ### Run Test Cases
@@ -91,9 +101,12 @@ bash tools/cvt_onnx2trt.sh
 运行测试用例，具体测试用例请参考代码。
 ```bash
 cd /workspace/build
-./bin/test_stereo_lightstereo --gtest_filter=*correctness
-# 限制GLOG输出
-GLOG_minloglevel=1 ./bin/test_stereo_lightstereo --gtest_filter=*speed
+# 运行正确性测试
+./bin/test_stereo_lightstereo
+# 运行性能benchmark
+./bin/benchmark_stereo_lightstereo
+# 运行精度测试(epe)
+./bin/eval_stereo_lightstereo
 ```
 
 ## References
