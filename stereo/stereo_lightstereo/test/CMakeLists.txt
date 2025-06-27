@@ -36,6 +36,7 @@ target_link_libraries(test_stereo_lightstereo PUBLIC
   deploy_core
   image_processing_utils
   stereo_lightstereo
+  test_utils
   ${platform_core_packages}
 )
 

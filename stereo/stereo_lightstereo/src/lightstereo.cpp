@@ -1,22 +1,22 @@
 #include "stereo_lightstereo/lightstereo.hpp"
 
-namespace stereo {
+namespace easy_deploy {
 
 class LightStereo : public BaseStereoMatchingModel {
 public:
-  LightStereo(const std::shared_ptr<inference_core::BaseInferCore>      &infer_core,
-              const std::shared_ptr<detection_2d::IDetectionPreProcess> &preprocess_block,
-              const int                                                  input_height,
-              const int                                                  input_width,
-              const std::vector<std::string>                            &input_blobs_name,
-              const std::vector<std::string>                            &output_blobs_name);
+  LightStereo(const std::shared_ptr<BaseInferCore>    &infer_core,
+              const std::shared_ptr<IImageProcessing> &preprocess_block,
+              const int                                input_height,
+              const int                                input_width,
+              const std::vector<std::string>          &input_blobs_name,
+              const std::vector<std::string>          &output_blobs_name);
 
   ~LightStereo() = default;
 
 private:
-  bool PreProcess(std::shared_ptr<async_pipeline::IPipelinePackage> pipeline_unit) override;
+  bool PreProcess(std::shared_ptr<IPipelinePackage> pipeline_unit) override;
 
-  bool PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> pipeline_unit) override;
+  bool PostProcess(std::shared_ptr<IPipelinePackage> pipeline_unit) override;
 
 private:
   const std::vector<std::string> input_blobs_name_;
@@ -24,17 +24,16 @@ private:
   const int                      input_height_;
   const int                      input_width_;
 
-  const std::shared_ptr<inference_core::BaseInferCore> infer_core_;
-  std::shared_ptr<detection_2d::IDetectionPreProcess>  preprocess_block_;
+  const std::shared_ptr<BaseInferCore> infer_core_;
+  std::shared_ptr<IImageProcessing>    preprocess_block_;
 };
 
-LightStereo::LightStereo(
-    const std::shared_ptr<inference_core::BaseInferCore>      &infer_core,
-    const std::shared_ptr<detection_2d::IDetectionPreProcess> &preprocess_block,
-    const int                                                  input_height,
-    const int                                                  input_width,
-    const std::vector<std::string>                            &input_blobs_name,
-    const std::vector<std::string>                            &output_blobs_name)
+LightStereo::LightStereo(const std::shared_ptr<BaseInferCore>    &infer_core,
+                         const std::shared_ptr<IImageProcessing> &preprocess_block,
+                         const int                                input_height,
+                         const int                                input_width,
+                         const std::vector<std::string>          &input_blobs_name,
+                         const std::vector<std::string>          &output_blobs_name)
     : BaseStereoMatchingModel(infer_core),
       infer_core_(infer_core),
       preprocess_block_(preprocess_block),
@@ -47,9 +46,8 @@ LightStereo::LightStereo(
   auto blobs_tensor = infer_core_->AllocBlobsBuffer();
   if (blobs_tensor->Size() != input_blobs_name_.size() + output_blobs_name_.size())
   {
-    LOG(ERROR) << "[LightStereo] Infer core should has {"
-               << input_blobs_name_.size() + output_blobs_name_.size() << "} blobs !"
-               << " but got " << blobs_tensor->Size() << " blobs";
+    LOG_ERROR("[LightStereo] Infer core should has {%d} blobs, but got {%d} blobs!",
+              input_blobs_name_.size() + output_blobs_name_.size(), blobs_tensor->Size());
     throw std::runtime_error("[LightStereo] Got invalid input arguments!!");
   }
 
@@ -64,7 +62,7 @@ LightStereo::LightStereo(
   }
 }
 
-bool LightStereo::PreProcess(std::shared_ptr<async_pipeline::IPipelinePackage> _package)
+bool LightStereo::PreProcess(std::shared_ptr<IPipelinePackage> _package)
 {
   auto package = std::dynamic_pointer_cast<StereoPipelinePackage>(_package);
   CHECK_STATE(package != nullptr,
@@ -73,10 +71,10 @@ bool LightStereo::PreProcess(std::shared_ptr<async_pipeline::IPipelinePackage> _
 
   auto blobs_tensor = package->GetInferBuffer();
 
-  const float left_scale = preprocess_block_->Preprocess(
-      package->left_image_data, blobs_tensor->GetTensor(input_blobs_name_[0]), input_height_,
-      input_width_);
-  const float right_scale = preprocess_block_->Preprocess(
+  const float left_scale  = preprocess_block_->Process(package->left_image_data,
+                                                       blobs_tensor->GetTensor(input_blobs_name_[0]),
+                                                       input_height_, input_width_);
+  const float right_scale = preprocess_block_->Process(
       package->right_image_data, blobs_tensor->GetTensor(input_blobs_name_[1]), input_height_,
       input_width_);
 
@@ -84,7 +82,7 @@ bool LightStereo::PreProcess(std::shared_ptr<async_pipeline::IPipelinePackage> _
   return true;
 }
 
-bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> _package)
+bool LightStereo::PostProcess(std::shared_ptr<IPipelinePackage> _package)
 {
   auto package = std::dynamic_pointer_cast<StereoPipelinePackage>(_package);
   CHECK_STATE(package != nullptr,
@@ -106,7 +104,8 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
   const int original_width  = package->left_image_data->GetImageDataInfo().image_width;
   const int crop_height     = original_height * package->transform_scale;
   const int crop_width      = original_width * package->transform_scale;
-  cv::Mat   crop_disp       = disp(cv::Rect(0, 0, crop_width, crop_height));
+  const int top_pad         = input_height_ - crop_height;
+  cv::Mat   crop_disp       = disp(cv::Rect(0, top_pad, crop_width, crop_height));
 
   // 2. resize to original
   cv::Mat disp_to_original;
@@ -118,15 +117,15 @@ bool LightStereo::PostProcess(std::shared_ptr<async_pipeline::IPipelinePackage> 
 }
 
 std::shared_ptr<BaseStereoMatchingModel> CreateLightStereoModel(
-    const std::shared_ptr<inference_core::BaseInferCore>      &infer_core,
-    const std::shared_ptr<detection_2d::IDetectionPreProcess> &preprocess_block,
-    const int                                                  input_height,
-    const int                                                  input_width,
-    const std::vector<std::string>                            &input_blobs_name,
-    const std::vector<std::string>                            &output_blobs_name)
+    const std::shared_ptr<BaseInferCore>    &infer_core,
+    const std::shared_ptr<IImageProcessing> &preprocess_block,
+    const int                                input_height,
+    const int                                input_width,
+    const std::vector<std::string>          &input_blobs_name,
+    const std::vector<std::string>          &output_blobs_name)
 {
   return std::make_shared<LightStereo>(infer_core, preprocess_block, input_height, input_width,
                                        input_blobs_name, output_blobs_name);
 }
 
-} // namespace stereo
+} // namespace easy_deploy
