@@ -109,6 +109,10 @@ cd /workspace/build
 ./bin/eval_stereo_lightstereo
 ```
 
+### Prepare Dataset for Evaluation
+
+在[SceneFlow](https://lmb.informatik.uni-freiburg.de/resources/datasets/SceneFlowDatasets.en.html)上下载`flyingthings3d_frames_finalpass`和`flyingthings3d_disparity`，解压后放到`/workspace/test_data/sceneflow/FlyingThings3D`下
+
 ## References
 
 - [OpenStereo/LightStereo](https://github.com/XiandaGuo/OpenStereo)
